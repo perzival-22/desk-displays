@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F1830">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Desk display, control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Instrument+Serif&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1" defer></script>
+<style>
+  :root {
+    --bg: #0F1830;
+    --panel: rgba(243, 239, 231, 0.045);
+    --panel-2: rgba(243, 239, 231, 0.08);
+    --line: rgba(243, 239, 231, 0.14);
+    --ink: #F3EFE7;
+    --ink-soft: rgba(243, 239, 231, 0.62);
+    --ink-faint: rgba(243, 239, 231, 0.32);
+    --warm: #F2B880;
+    --cool: #9CC3E6;
+    --bad: #E88C8C;
+    --serif: "Instrument Serif", Georgia, "Times New Roman", serif;
+    --sans: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --r: 12px;                 /* one radius everywhere; icon-only buttons are round */
+  }
+
+  * { box-sizing: border-box; margin: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    min-height: 100dvh;
+    background:
+      radial-gradient(1200px 700px at 82% -10%, #1E2A4D, transparent 60%),
+      var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--warm); }
+  ::placeholder { color: var(--ink-faint); }
+
+  .wrap {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: clamp(24px, 5vw, 56px) clamp(18px, 4vw, 40px) 72px;
+  }
+
+  header.top { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: clamp(28px, 5vh, 48px); }
+  .brand h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(34px, 6vw, 52px); line-height: 1; letter-spacing: -0.01em; }
+  .brand p { margin-top: 0.5em; color: var(--ink-soft); font-size: 15px; }
+  .to-display { display: inline-flex; align-items: center; gap: 0.5em; font-size: 14px; text-decoration: none; padding: 10px 16px; border: 1px solid var(--line); border-radius: var(--r); color: var(--ink); transition: transform 0.15s ease, background 0.2s ease; }
+  .to-display:hover { background: var(--panel-2); }
+  .to-display:active { transform: translateY(1px); }
+
+  .grid { display: grid; grid-template-columns: 1fr; gap: clamp(18px, 3vw, 28px); }
+  @media (min-width: 820px) { .grid { grid-template-columns: 1fr 1fr; align-items: start; } }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: clamp(20px, 3vw, 28px); }
+  .panel h2 { font-family: var(--serif); font-weight: 400; font-size: 26px; display: flex; align-items: center; gap: 0.45em; }
+  .panel h2 i { font-size: 22px; color: var(--warm); }
+  .panel .lead { color: var(--ink-soft); font-size: 14px; margin-top: 0.35em; margin-bottom: 20px; }
+
+  label { display: block; font-size: 13px; color: var(--ink-soft); margin-bottom: 6px; }
+  input[type="text"], input[type="datetime-local"] {
+    width: 100%; font: inherit; color: var(--ink);
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--r);
+    padding: 12px 14px; transition: border-color 0.15s ease;
+  }
+  input[type="text"]:focus, input[type="datetime-local"]:focus { outline: none; border-color: var(--warm); }
+  input[type="datetime-local"] { color-scheme: dark; }
+
+  .field { margin-bottom: 14px; }
+  .row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+  .row .field { flex: 1; min-width: 160px; margin-bottom: 0; }
+
+  .btn {
+    font: inherit; font-weight: 600; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5em;
+    padding: 12px 18px; border-radius: var(--r); border: 1px solid transparent;
+    transition: transform 0.15s ease, background 0.2s ease, opacity 0.2s ease;
+  }
+  .btn:active { transform: translateY(1px) scale(0.99); }
+  .btn[disabled] { opacity: 0.5; cursor: default; }
+  .btn[hidden] { display: none; }
+  .calendar-panel { grid-column: 1 / -1; }
+  .calendar-panel .row { margin-top: 16px; }
+  .calendar-panel details { margin-top: 16px; overflow-wrap: anywhere; }
+  .calendar-panel ol { padding-left: 20px; margin-top: 10px; }
+  .btn-primary { background: var(--warm); color: #241a10; }
+  .btn-primary:hover:not([disabled]) { background: #f6c795; }
+  .btn-ghost { background: transparent; border-color: var(--line); color: var(--ink); }
+  .btn-ghost:hover:not([disabled]) { background: var(--panel-2); }
+
+  /* Icon-only buttons are round by rule; everything else uses --r. */
+  .icon-btn { width: 34px; height: 34px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); background: transparent; color: var(--ink-soft); cursor: pointer; flex: none; transition: color 0.15s ease, border-color 0.15s ease, background 0.2s ease; }
+  .icon-btn:hover { color: var(--bad); border-color: var(--bad); }
+  .icon-btn:active { transform: scale(0.94); }
+
+  /* Reminders list */
+  .r-list { list-style: none; margin-top: 22px; display: grid; gap: 10px; }
+  .r-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--r); }
+  .r-item .r-main { min-width: 0; flex: 1; }
+  .r-item .r-txt { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .r-item .r-when { font-size: 12.5px; color: var(--cool); font-variant-numeric: tabular-nums; }
+  .r-item .r-when.overdue { color: var(--warm); }
+
+  /* Dropzone + photo grid */
+  .drop { border: 1.5px dashed var(--line); border-radius: var(--r); padding: 28px 20px; text-align: center; color: var(--ink-soft); cursor: pointer; transition: border-color 0.15s ease, background 0.2s ease; }
+  .drop:hover, .drop.over { border-color: var(--warm); background: var(--panel-2); color: var(--ink); }
+  .drop i { font-size: 30px; color: var(--warm); display: block; margin-bottom: 8px; }
+  .drop small { display: block; margin-top: 6px; font-size: 12.5px; color: var(--ink-faint); }
+
+  .queue { list-style: none; margin-top: 14px; display: grid; gap: 8px; }
+  .queue li { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-soft); }
+  .queue .q-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+  .queue .ok { color: var(--cool); } .queue .err { color: var(--bad); }
+
+  .photo-grid { margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+  .cell { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: var(--panel-2); border: 1px solid var(--line); }
+  .cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cell .del { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border-radius: 999px; border: none; background: rgba(15, 24, 48, 0.72); color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s ease, background 0.2s ease; }
+  .cell:hover .del, .cell:focus-within .del { opacity: 1; }
+  .cell .del:hover { background: var(--bad); color: #241010; }
+
+  /* States */
+  .muted { color: var(--ink-soft); font-size: 14px; }
+  .empty { padding: 22px 4px; color: var(--ink-faint); font-size: 14px; }
+  .skeleton { height: 46px; border-radius: var(--r); background: linear-gradient(90deg, var(--panel-2), rgba(243,239,231,0.12), var(--panel-2)); background-size: 200% 100%; animation: sh 1.3s ease infinite; }
+  .sk-grid { display: grid; gap: 10px; margin-top: 22px; }
+  @keyframes sh { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+  .inline-err { color: var(--bad); font-size: 13px; margin-top: 10px; min-height: 1.2em; }
+
+  /* Key gate */
+  .gate { position: fixed; inset: 0; background: var(--bg); display: grid; place-items: center; padding: 24px; z-index: 20; }
+  .gate .card { width: 100%; max-width: 380px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 30px; text-align: center; }
+  .gate i.lock { font-size: 30px; color: var(--warm); }
+  .gate h2 { font-family: var(--serif); font-weight: 400; font-size: 28px; margin: 12px 0 4px; }
+  .gate p { color: var(--ink-soft); font-size: 14px; margin-bottom: 18px; }
+  .gate input { margin-bottom: 12px; text-align: center; }
+  .gate .btn { width: 100%; }
+  .gate[hidden] { display: none; }
+
+  /* Toasts */
+  .toasts { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); display: grid; gap: 8px; z-index: 30; width: min(92vw, 420px); }
+  .toast { padding: 12px 16px; border-radius: var(--r); font-size: 14px; border: 1px solid var(--line); background: #16213f; box-shadow: 0 14px 40px rgba(0,0,0,0.4); animation: pop 0.2s ease; }
+  .toast.good { border-color: rgba(156,195,230,0.5); }
+  .toast.bad { border-color: rgba(232,140,140,0.5); }
+  @keyframes pop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+</style>
+</head>
+<body>
+  <!-- Key gate -->
+  <div class="gate" id="gate">
+    <div class="card">
+      <i class="ph ph-lock-key lock"></i>
+      <h2>Control panel</h2>
+      <p>Enter your admin key to manage reminders and photos.</p>
+      <form id="gateForm">
+        <input type="password" id="gateKey" placeholder="Admin key" autocomplete="current-password" required>
+        <button class="btn btn-primary" type="submit" id="gateBtn">Unlock</button>
+        <div class="inline-err" id="gateErr"></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <header class="top">
+      <div class="brand">
+        <h1>Desk display</h1>
+        <p>Add reminders and photos. The display picks up changes within a few minutes.</p>
+      </div>
+      <a class="to-display" id="viewLink" href="./"><i class="ph ph-monitor"></i> View display</a>
+    </header>
+
+    <div class="grid">
+      <section class="panel calendar-panel" aria-labelledby="googleHeading">
+        <h2 id="googleHeading"><i class="ph ph-calendar"></i> Google Calendar</h2>
+        <p class="lead">Add an event to your primary Google calendar on your phone and it appears in Reminders. The display checks every five minutes for the next 30 days, up to 100 events.</p>
+        <p class="muted" id="gStatus" role="status" aria-live="polite">Checking connection…</p>
+        <div class="row">
+          <button class="btn btn-primary" id="gConnect" type="button">Connect Google Calendar</button>
+          <button class="btn btn-ghost" id="gSync" type="button" hidden>Sync now</button>
+          <button class="btn btn-ghost" id="gDisconnect" type="button" hidden>Disconnect</button>
+        </div>
+        <div class="inline-err" id="gErr" role="alert"></div>
+        <details id="gSetup" class="muted" hidden>
+          <summary>One-time Google setup</summary>
+          <ol>
+            <li>In Google Cloud, enable Google Calendar API and create an OAuth client of type Web application. Configure the consent screen and add your Google account as a test user if the app is in Testing.</li>
+            <li>Add <code id="gRedirect"></code> as an authorized redirect URI.</li>
+            <li>In Vercel, set <code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code>, and <code>GOOGLE_REDIRECT_URI</code> to the client credentials and that URL.</li>
+            <li>Set <code>GOOGLE_CALENDAR_SECRET</code> to a securely generated 64-character hex key, and ensure <code>DASH_KEY</code> and the existing Blob store are configured. Redeploy, then connect here.</li>
+          </ol>
+          <p>Only read access is requested. Google apps in Testing may need reconnecting every seven days. See README for setup commands.</p>
+        </details>
+      </section>
+      <!-- Reminders -->
+      <section class="panel">
+        <h2><i class="ph ph-bell"></i> Reminders</h2>
+        <p class="lead">They show under the weather on the left of the display.</p>
+        <form id="rForm">
+          <div class="field">
+            <label for="rText">Reminder</label>
+            <input type="text" id="rText" placeholder="Call the electrician" maxlength="200" required>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="rDue">When (optional)</label>
+              <input type="datetime-local" id="rDue">
+            </div>
+            <button class="btn btn-primary" type="submit" id="rAdd"><i class="ph ph-plus"></i> Add</button>
+          </div>
+        </form>
+        <div class="inline-err" id="rErr"></div>
+        <div id="rBody">
+          <div class="sk-grid"><div class="skeleton"></div><div class="skeleton"></div></div>
+        </div>
+      </section>
+
+      <!-- Photos -->
+      <section class="panel">
+        <h2><i class="ph ph-image"></i> Photos</h2>
+        <p class="lead">They rotate on the right whenever music isn't playing.</p>
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Add photos">
+          <i class="ph ph-upload-simple"></i>
+          Drop photos here, or click to choose
+          <small>Resized to 2000px on your device before upload, so they load fast.</small>
+        </div>
+        <input type="file" id="file" accept="image/*" multiple hidden>
+        <ul class="queue" id="queue"></ul>
+        <div class="inline-err" id="pErr"></div>
+        <div id="pBody">
+          <div class="sk-grid"><div class="skeleton"></div></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  let KEY = sessionStorage.getItem("deskAdminKey") || "";
+
+  // Preserve ?key= across the "View display" link so it opens authenticated too.
+  (function () {
+    const qk = new URLSearchParams(location.search).get("key");
+    if (qk) { $("viewLink").href = "./?key=" + encodeURIComponent(qk); }
+  })();
+
+  function toast(msg, kind) {
+    const el = document.createElement("div");
+    el.className = "toast " + (kind === "bad" ? "bad" : "good");
+    el.textContent = msg;
+    $("toasts").appendChild(el);
+    setTimeout(() => el.remove(), 3600);
+  }
+
+  async function api(path, opts = {}) {
+    const res = await fetch(path, opts);
+    let data = null;
+    try { data = await res.json(); } catch {}
+    if (!res.ok) throw new Error((data && data.error) || `Request failed (${res.status})`);
+    return data || {};
+  }
+  const writeHeaders = () => ({ "content-type": "application/json", "x-admin-key": KEY });
+
+  // ---------- Google Calendar ----------
+  let googleBusy = false;
+  let refreshTimer;
+  $("gRedirect").textContent = location.origin + "/api/google-callback";
+  const googleResult = new URLSearchParams(location.search).get("google");
+  const googleMessages = {
+    connected: "Google Calendar connected. Your events will appear below.",
+    cancelled: "Google connection was cancelled. Connect again when ready.",
+    expired: "The connection link expired. Please connect again.",
+    setup: "Finish the Google setup, redeploy, then connect again.",
+    failed: "Google could not finish connecting. Check the credentials, redirect URI, calendar permission, and Blob store, then retry.",
+  };
+  if (googleMessages[googleResult]) {
+    $("gErr").textContent = googleResult === "connected" ? "" : googleMessages[googleResult];
+    toast(googleMessages[googleResult], googleResult === "connected" ? "good" : "bad");
+    const clean = new URL(location.href); clean.searchParams.delete("google");
+    history.replaceState(null, "", clean.pathname + clean.search + clean.hash);
+  }
+
+  async function loadGoogle() {
+    if (googleBusy) return;
+    googleBusy = true;
+    try {
+      const data = await api("/api/google-calendar", { headers: writeHeaders() });
+      const connected = data.status === "connected";
+      $("gSetup").hidden = data.status !== "setup";
+      $("gSetup").open = data.status === "setup";
+      $("gConnect").disabled = data.status === "setup";
+      $("gConnect").textContent = connected ? "Reconnect Google Calendar" : "Connect Google Calendar";
+      $("gSync").hidden = !connected;
+      $("gDisconnect").hidden = data.status === "disconnected";
+      $("gStatus").textContent = connected
+        ? `Connected · ${data.reminders.length} upcoming events · Synced ${new Date(data.syncedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}${data.limited ? " · Showing the first 100 events" : ""}`
+        : data.status === "setup" ? data.error : "Not connected. Connect your Google account to start syncing.";
+    } catch (error) {
+      $("gStatus").textContent = error.message;
+      $("gConnect").disabled = false;
+      $("gConnect").textContent = "Reconnect Google Calendar";
+      $("gSync").hidden = false;
+      $("gDisconnect").hidden = false;
+    } finally { googleBusy = false; }
+  }
+
+  $("gConnect").addEventListener("click", async () => {
+    $("gConnect").disabled = true;
+    $("gErr").textContent = "";
+    try {
+      const data = await api("/api/google-calendar", { method: "POST", headers: writeHeaders() });
+      location.assign(data.url);
+    } catch (error) { $("gErr").textContent = error.message; $("gConnect").disabled = false; }
+  });
+  $("gSync").addEventListener("click", async () => {
+    $("gSync").disabled = true;
+    await Promise.all([loadGoogle(), loadReminders()]);
+    $("gSync").disabled = false;
+  });
+  $("gDisconnect").addEventListener("click", async () => {
+    $("gDisconnect").disabled = true;
+    $("gErr").textContent = "";
+    try {
+      await api("/api/google-calendar", { method: "DELETE", headers: writeHeaders() });
+      await Promise.all([loadGoogle(), loadReminders()]);
+      toast("Calendar disconnected. Your events in Google are unchanged.");
+    } catch (error) { $("gErr").textContent = error.message; }
+    finally { $("gDisconnect").disabled = false; }
+  });
+
+  function dueTime(due) {
+    return Date.parse(/^\d{4}-\d{2}-\d{2}$/.test(due) ? due + "T00:00:00" : due);
+  }
+
+  // ---------- Reminders ----------
+  function fmtWhen(due) {
+    if (!due) return { text: "", overdue: false };
+    const t = dueTime(due);
+    if (Number.isNaN(t)) return { text: "", overdue: false };
+    const hasTime = /\d{2}:\d{2}/.test(due);
+    const text = new Date(t).toLocaleString("en-US",
+      hasTime ? { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }
+              : { month: "short", day: "numeric" });
+    return { text, overdue: new Date(t).setHours(23, 59, 59, 999) < Date.now() };
+  }
+
+  function renderReminders(items) {
+    const body = $("rBody");
+    if (!items.length) { body.innerHTML = '<div class="empty">No reminders yet. Add one above.</div>'; return; }
+    const sorted = [...items].sort((a, b) => {
+      const ad = a.due ? dueTime(a.due) : Infinity;
+      const bd = b.due ? dueTime(b.due) : Infinity;
+      if (ad !== bd) return ad - bd;
+      return (b.created || 0) - (a.created || 0);
+    });
+    body.innerHTML = '<ul class="r-list">' + sorted.map((r) => {
+      const w = fmtWhen(r.due);
+      const when = w.text ? `<span class="r-when${w.overdue ? " overdue" : ""}">${esc(w.text)}</span>` : "";
+      const control = r.source === "google"
+        ? '<span class="muted" title="Edit or delete in Google Calendar">Google Calendar</span>'
+        : `<button class="icon-btn" data-del="${esc(r.id)}" aria-label="Delete reminder"><i class="ph ph-trash"></i></button>`;
+      return `<li class="r-item"><span class="r-main"><span class="r-txt">${esc(r.text)}</span>${when}</span>${control}</li>`;
+    }).join("") + "</ul>";
+  }
+
+  async function loadReminders() {
+    try {
+      const data = await api("/api/reminders?key=" + encodeURIComponent(KEY));
+      renderReminders(data.reminders || []);
+      $("rErr").textContent = data.google?.error || "";
+    } catch (e) {
+      $("rBody").innerHTML = `<div class="empty">Could not load reminders.</div>`;
+      $("rErr").textContent = e.message;
+    }
+  }
+
+  $("rForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    $("rErr").textContent = "";
+    const text = $("rText").value.trim();
+    if (!text) return;
+    const due = $("rDue").value || "";
+    $("rAdd").disabled = true;
+    try {
+      const data = await api("/api/reminders", { method: "POST", headers: writeHeaders(), body: JSON.stringify({ text, due }) });
+      await loadReminders();
+      $("rText").value = ""; $("rDue").value = "";
+      toast("Reminder added");
+    } catch (e) {
+      $("rErr").textContent = e.message;
+      toast(e.message, "bad");
+    } finally {
+      $("rAdd").disabled = false;
+    }
+  });
+
+  $("rBody").addEventListener("click", async (ev) => {
+    const btn = ev.target.closest("[data-del]");
+    if (!btn) return;
+    btn.disabled = true;
+    try {
+      const data = await api("/api/reminders?id=" + encodeURIComponent(btn.dataset.del), { method: "DELETE", headers: writeHeaders() });
+      await loadReminders();
+      toast("Reminder removed");
+    } catch (e) {
+      toast(e.message, "bad");
+      btn.disabled = false;
+    }
+  });
+
+  // ---------- Photos ----------
+  function renderPhotos(urls) {
+    const body = $("pBody");
+    if (!urls.length) { body.innerHTML = '<div class="empty">No photos yet. Drop a few above.</div>'; return; }
+    body.innerHTML = '<div class="photo-grid">' + urls.map((u) =>
+      `<div class="cell"><img src="${esc(u)}" alt="" loading="lazy">` +
+      `<button class="del" data-url="${esc(u)}" aria-label="Delete photo"><i class="ph ph-x"></i></button></div>`
+    ).join("") + "</div>";
+  }
+
+  async function loadPhotos() {
+    try {
+      const data = await api("/api/photos?key=" + encodeURIComponent(KEY));
+      renderPhotos(data.photos || []);
+    } catch (e) {
+      $("pBody").innerHTML = `<div class="empty">Could not load photos.</div>`;
+      $("pErr").textContent = e.message;
+    }
+  }
+
+  $("pBody").addEventListener("click", async (ev) => {
+    const btn = ev.target.closest("[data-url]");
+    if (!btn) return;
+    btn.disabled = true;
+    try {
+      await api("/api/photos?url=" + encodeURIComponent(btn.dataset.url), { method: "DELETE", headers: writeHeaders() });
+      toast("Photo removed");
+      loadPhotos();
+    } catch (e) {
+      toast(e.message, "bad");
+      btn.disabled = false;
+    }
+  });
+
+  // Downscale on-device so uploads stay small and load fast on the phone.
+  function downscale(file, maxDim = 2000, quality = 0.85) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        c.toBlob((b) => (b ? resolve(b) : reject(new Error("Could not process image"))), "image/jpeg", quality);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Not a readable image")); };
+      img.src = url;
+    });
+  }
+  const toDataURL = (blob) => new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(new Error("Read failed"));
+    r.readAsDataURL(blob);
+  });
+
+  async function uploadFiles(files) {
+    const list = [...files].filter((f) => f.type.startsWith("image/"));
+    if (!list.length) return;
+    $("pErr").textContent = "";
+    const queue = $("queue");
+    for (const file of list) {
+      const li = document.createElement("li");
+      li.innerHTML = `<i class="ph ph-circle-notch"></i><span class="q-name">${esc(file.name)}</span>`;
+      queue.appendChild(li);
+      try {
+        const blob = await downscale(file);
+        const dataUrl = await toDataURL(blob);
+        const name = file.name.replace(/\.[^.]+$/, "");
+        await api("/api/photos", { method: "POST", headers: writeHeaders(), body: JSON.stringify({ name, dataUrl }) });
+        li.innerHTML = `<i class="ph ph-check-circle ok"></i><span class="q-name">${esc(file.name)}</span>`;
+      } catch (e) {
+        li.innerHTML = `<i class="ph ph-warning-circle err"></i><span class="q-name">${esc(file.name)}</span><span class="err">${esc(e.message)}</span>`;
+      }
+      setTimeout(() => li.remove(), 4000);
+    }
+    toast("Upload finished");
+    loadPhotos();
+  }
+
+  const drop = $("drop");
+  drop.addEventListener("click", () => $("file").click());
+  drop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("file").click(); } });
+  $("file").addEventListener("change", (e) => { uploadFiles(e.target.files); e.target.value = ""; });
+  ["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", (e) => { if (e.dataTransfer && e.dataTransfer.files) uploadFiles(e.dataTransfer.files); });
+
+  // ---------- Key gate ----------
+  function openApp() {
+    $("gate").hidden = true;
+    loadReminders();
+    loadPhotos();
+    loadGoogle();
+    if (!refreshTimer) refreshTimer = setInterval(() => {
+      if (!document.hidden) { loadReminders(); loadGoogle(); }
+    }, 5 * 60 * 1000);
+  }
+
+  $("gateForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    $("gateErr").textContent = "";
+    const candidate = $("gateKey").value.trim();
+    if (!candidate) return;
+    $("gateBtn").disabled = true;
+    try {
+      // Verify by reading through the key before we store it.
+      const res = await fetch("/api/reminders?key=" + encodeURIComponent(candidate));
+      if (res.status === 401) throw new Error("That key was not accepted.");
+      if (!res.ok && res.status !== 200) throw new Error(`Server error (${res.status}).`);
+      KEY = candidate;
+      sessionStorage.setItem("deskAdminKey", KEY);
+      openApp();
+    } catch (e) {
+      $("gateErr").textContent = e.message || "Could not verify the key.";
+    } finally {
+      $("gateBtn").disabled = false;
+    }
+  });
+
+  // Start: use a stored key if present, else show the gate.
+  if (KEY) {
+    fetch("/api/reminders?key=" + encodeURIComponent(KEY)).then((res) => {
+      if (res.ok) openApp();
+      else { sessionStorage.removeItem("deskAdminKey"); KEY = ""; $("gate").hidden = false; }
+    }).catch(() => { $("gate").hidden = false; });
+  } else {
+    $("gate").hidden = false;
+  }
+</script>
+</body>
+</html>

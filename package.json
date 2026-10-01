@@ -1,0 +1,8 @@
+{
+  "name": "desk-display",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": { "test": "node --test", "preview": "node scripts/preview-server.js" },
+  "dependencies": { "@vercel/blob": "^2.7.0" }
+}

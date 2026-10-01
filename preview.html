@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Desk display · Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Instrument+Serif&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: dark; --base:#101d29; --panel:#192b3a; --line:#344857; --ink:#f3efe7; --soft:#a8bbc6; --accent:#f2b880; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--base); color:var(--ink); font:15px "Figtree",system-ui,sans-serif; }
+  header { padding:24px 32px; display:flex; align-items:center; justify-content:space-between; gap:20px; border-bottom:1px solid var(--line); }
+  h1 { margin:0; font:36px "Instrument Serif",Georgia,serif; }
+  header p { margin:6px 0 0; color:var(--soft); line-height:1.5; }
+  a { color:var(--accent); text-underline-offset:4px; }
+  .workspace { display:grid; grid-template-columns:260px minmax(0,1fr); min-height:calc(100dvh - 115px); }
+  aside { padding:28px 24px; border-right:1px solid var(--line); }
+  fieldset { margin:0 0 28px; padding:0; border:0; min-width:0; }
+  legend { margin-bottom:14px; color:var(--soft); font-size:12px; letter-spacing:.12em; text-transform:uppercase; }
+  label { display:block; margin:0 0 8px; }
+  select, input, button { width:100%; min-height:42px; border:1px solid var(--line); border-radius:8px; padding:9px 11px; background:var(--panel); color:var(--ink); font:inherit; }
+  select { margin-bottom:16px; }
+  button { cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:4px; }
+  .dimensions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+  .dimensions label { font-size:12px; color:var(--soft); }
+  .dimensions input { margin-top:7px; }
+  .hint { font-size:13px; line-height:1.6; color:var(--soft); }
+  .preview { min-width:0; padding:24px 32px; display:flex; flex-direction:column; }
+  .preview-head { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:18px; }
+  .preview-head p { margin:0; }
+  #readout { color:var(--soft); font-variant-numeric:tabular-nums; font-size:13px; }
+  .stage { flex:1; min-height:420px; display:flex; align-items:center; justify-content:center; overflow:hidden; background:radial-gradient(ellipse at center,#243c4c,var(--base) 72%); }
+  .frame { position:relative; flex:none; box-shadow:0 24px 70px #0006; outline:1px solid #ffffff24; border-radius:10px; overflow:hidden; }
+  iframe { display:block; border:0; transform-origin:top left; background:#0f1830; }
+  .caption { display:flex; justify-content:space-between; gap:20px; color:var(--soft); font-size:12px; line-height:1.6; margin-top:20px; }
+  #fullscreen { width:auto; }
+  @media (max-width:760px) {
+    header { padding:20px; align-items:flex-start; }
+    h1 { font-size:30px; }
+    .workspace { grid-template-columns:1fr; }
+    aside { border-right:0; border-bottom:1px solid var(--line); display:grid; grid-template-columns:1fr 1fr; gap:20px; padding:20px; }
+    fieldset { margin:0; }
+    aside > .hint { grid-column:1 / -1; margin:0; }
+    .preview { padding:20px; }
+    .stage { min-height:360px; }
+    .caption { flex-direction:column; gap:4px; }
+  }
+  @media (max-width:380px) { aside { grid-template-columns:1fr; } header { flex-wrap:wrap; } }
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Desk display <span style="color:var(--soft)">/ Preview</span></h1><p>A little atmosphere, on every screen.</p></div>
+  <a id="openDisplay" href="/?preview=1&amp;demo=1" target="_blank" rel="noopener">Open full size ↗</a>
+</header>
+<main class="workspace">
+  <aside aria-label="Preview controls">
+    <fieldset><legend>Screen</legend>
+      <label for="screen">Display size</label>
+      <select id="screen">
+        <option value="fit">This window</option>
+        <option value="1920x1080" selected>Desktop · 1920 × 1080</option>
+        <option value="2560x1440">Desktop · 2560 × 1440</option>
+        <option value="3840x2160">4K · 3840 × 2160</option>
+        <option value="1024x600">Fire tablet · 1024 × 600</option>
+        <option value="1280x800">Tablet · 1280 × 800</option>
+        <option value="800x360">Phone landscape · 800 × 360</option>
+        <option value="360x800">Phone portrait · 360 × 800</option>
+        <option value="custom">Custom size</option>
+      </select>
+      <div class="dimensions">
+        <label for="width">Width<input id="width" type="number" min="240" max="7680" value="1920" step="1"></label>
+        <label for="height">Height<input id="height" type="number" min="240" max="7680" value="1080" step="1"></label>
+      </div>
+      <button id="rotate" type="button">Rotate screen</button>
+    </fieldset>
+    <fieldset><legend>Atmosphere</legend>
+      <label for="effect">Weather effect</label>
+      <select id="effect">
+        <option value="cloudy">Cloudy</option><option value="sun">Sunny</option>
+        <option value="partly">Partly cloudy</option><option value="rain">Rain</option>
+        <option value="snow">Snow</option><option value="fog">Fog</option>
+        <option value="storm">Thunderstorms</option><option value="stars">Clear night</option>
+      </select>
+      <label for="content">Display content</label>
+      <select id="content"><option value="photos">Sample landscape</option><option value="music">Sample music</option><option value="live">Live display</option></select>
+    </fieldset>
+    <p class="hint" id="modeNote">Sample content. Changes here only affect this preview. Your desk displays keep following live weather.</p>
+  </aside>
+  <section class="preview" aria-label="Display preview">
+    <div class="preview-head"><p id="readout" role="status" aria-live="polite"></p><button id="fullscreen" type="button">Fullscreen</button></div>
+    <div class="stage" id="stage"><div class="frame" id="frame"><iframe id="display" title="Desk display at the selected resolution" src="about:blank" allow="fullscreen"></iframe></div></div>
+    <div class="caption"><span>One dashboard. The layout adapts inside the frame.</span><span id="motionNote">Effects pause when this tab is hidden.</span></div>
+  </section>
+</main>
+<script src="/preview.js"></script>
+</body>
+</html>
